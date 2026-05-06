@@ -219,6 +219,42 @@ services:
     networks:
       - resync_backend
 
+  dispatcher:
+    build:
+      context: .
+      dockerfile: services/dispatcher/Dockerfile
+    container_name: resync-dispatcher
+    restart: unless-stopped
+    profiles:
+      - dispatcher
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: ${POSTGRES_DB:-vision_system}
+      POSTGRES_USER: ${POSTGRES_USER:-vision_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-CHANGE_ME_DO_NOT_USE_THIS_IN_PROD}
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: ${RABBITMQ_USER:-admin}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-CHANGE_ME}
+      RABBITMQ_EVENTS_EXCHANGE: ${RABBITMQ_EVENTS_EXCHANGE:-events}
+      DISPATCHER_QUEUE_NAME: ${DISPATCHER_QUEUE_NAME:-webhook_dispatch}
+      DISPATCHER_ROUTING_KEY: ${DISPATCHER_ROUTING_KEY:-events.#}
+      DISPATCHER_DLQ_EXCHANGE: ${DISPATCHER_DLQ_EXCHANGE:-events.dlx}
+      DISPATCHER_DLQ_QUEUE_NAME: ${DISPATCHER_DLQ_QUEUE_NAME:-dlq.webhook}
+      DISPATCHER_DLQ_ROUTING_KEY: ${DISPATCHER_DLQ_ROUTING_KEY:-dlq.webhook}
+      DISPATCHER_HTTP_TIMEOUT_SECONDS: ${DISPATCHER_HTTP_TIMEOUT_SECONDS:-5}
+      DISPATCHER_MAX_RETRIES: ${DISPATCHER_MAX_RETRIES:-3}
+      DISPATCHER_RETRY_BACKOFF_SECONDS: ${DISPATCHER_RETRY_BACKOFF_SECONDS:-1,2,4}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - resync_backend
+
   adminer:
     image: adminer:4
     container_name: resync-adminer

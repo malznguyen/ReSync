@@ -65,17 +65,24 @@
       }
     },
     {
-      "name": "webhook_retry",
+      "name": "webhook_dispatch",
       "vhost": "/",
       "durable": true,
       "auto_delete": false,
       "arguments": {
         "x-dead-letter-exchange": "events.dlx",
-        "x-dead-letter-routing-key": "dlq"
+        "x-dead-letter-routing-key": "dlq.webhook"
       }
     },
     {
       "name": "dlq",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+    {
+      "name": "dlq.webhook",
       "vhost": "/",
       "durable": true,
       "auto_delete": false,
@@ -102,7 +109,7 @@
     {
       "source": "events",
       "vhost": "/",
-      "destination": "webhook_retry",
+      "destination": "webhook_dispatch",
       "destination_type": "queue",
       "routing_key": "events.#",
       "arguments": {}
@@ -113,6 +120,14 @@
       "destination": "dlq",
       "destination_type": "queue",
       "routing_key": "dlq",
+      "arguments": {}
+    },
+    {
+      "source": "events.dlx",
+      "vhost": "/",
+      "destination": "dlq.webhook",
+      "destination_type": "queue",
+      "routing_key": "dlq.webhook",
       "arguments": {}
     }
   ],
