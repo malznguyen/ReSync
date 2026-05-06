@@ -178,6 +178,47 @@ services:
     networks:
       - resync_backend
 
+  analytics:
+    build:
+      context: .
+      dockerfile: services/analytics/Dockerfile
+    container_name: resync-analytics
+    restart: unless-stopped
+    profiles:
+      - analytics
+    environment:
+      CAMERA_ID: ${ANALYTICS_CAMERA_ID:-00000000-0000-0000-0000-000000000101}
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: ${POSTGRES_DB:-vision_system}
+      POSTGRES_USER: ${POSTGRES_USER:-vision_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-CHANGE_ME_DO_NOT_USE_THIS_IN_PROD}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: ${RABBITMQ_USER:-admin}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-CHANGE_ME}
+      ANALYTICS_POLL_SECONDS: ${ANALYTICS_POLL_SECONDS:-0.1}
+      ANALYTICS_REDIS_SOCKET_TIMEOUT_SECONDS: ${ANALYTICS_REDIS_SOCKET_TIMEOUT_SECONDS:-2}
+      ANALYTICS_TRACK_MISSING_SECONDS: ${ANALYTICS_TRACK_MISSING_SECONDS:-5}
+      ANALYTICS_CLEANUP_INTERVAL_SECONDS: ${ANALYTICS_CLEANUP_INTERVAL_SECONDS:-1}
+      ZONE_CACHE_REFRESH_SECONDS: ${ZONE_CACHE_REFRESH_SECONDS:-60}
+      SEATED_THRESHOLD_SECONDS: ${SEATED_THRESHOLD_SECONDS:-3.0}
+      HAND_RAISE_THRESHOLD_SECONDS: ${HAND_RAISE_THRESHOLD_SECONDS:-1.5}
+      HAND_RAISE_COOLDOWN_SECONDS: ${HAND_RAISE_COOLDOWN_SECONDS:-10}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - resync_backend
+
   adminer:
     image: adminer:4
     container_name: resync-adminer
