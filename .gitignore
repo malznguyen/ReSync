@@ -33,6 +33,8 @@ pnpm-debug.log*
 # Local data and generated assets
 data/
 models/
+!api/models/
+!api/models/*.py
 *.log
 
 # OS / editor

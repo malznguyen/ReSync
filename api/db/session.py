@@ -6,6 +6,8 @@ Purpose: Create SQLAlchemy engine and session factories for PostgreSQL.
 
 from __future__ import annotations
 
+from collections.abc import Generator
+
 from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session, sessionmaker
@@ -21,5 +23,6 @@ engine = create_postgres_engine()
 SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
 
 
-def get_session() -> Session:
-    return SessionLocal()
+def get_session() -> Generator[Session, None, None]:
+    with SessionLocal() as session:
+        yield session

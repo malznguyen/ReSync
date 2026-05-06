@@ -255,6 +255,37 @@ services:
     networks:
       - resync_backend
 
+  api:
+    build:
+      context: .
+      dockerfile: api/Dockerfile
+    container_name: resync-api
+    restart: unless-stopped
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: ${POSTGRES_DB:-vision_system}
+      POSTGRES_USER: ${POSTGRES_USER:-vision_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-CHANGE_ME_DO_NOT_USE_THIS_IN_PROD}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set}
+      JWT_ALGORITHM: HS256
+      JWT_EXPIRE_MINUTES: ${JWT_EXPIRE_MINUTES:-1440}
+      API_ADMIN_USERNAME: ${API_ADMIN_USERNAME:-admin}
+      API_ADMIN_PASSWORD_HASH: ${API_ADMIN_PASSWORD_HASH:?API_ADMIN_PASSWORD_HASH must be set}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "${API_PORT:-8000}:8000"
+    networks:
+      - resync_backend
+
   adminer:
     image: adminer:4
     container_name: resync-adminer

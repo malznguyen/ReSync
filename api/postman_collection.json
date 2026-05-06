@@ -1,0 +1,653 @@
+{
+  "info": {
+    "name": "AI Restaurant Vision Control API",
+    "description": "Postman collection exported from the Phase 7 FastAPI OpenAPI schema.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{access_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000"
+    },
+    {
+      "key": "access_token",
+      "value": ""
+    },
+    {
+      "key": "admin_password",
+      "value": ""
+    },
+    {
+      "key": "camera_id",
+      "value": "00000000-0000-0000-0000-000000000101"
+    },
+    {
+      "key": "zone_id",
+      "value": ""
+    },
+    {
+      "key": "webhook_id",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "List events",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/analytics/events",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "analytics",
+            "events"
+          ],
+          "query": [
+            {
+              "key": "start_at",
+              "value": "",
+              "disabled": true,
+              "description": "Inclusive timestamp start."
+            },
+            {
+              "key": "end_at",
+              "value": "",
+              "disabled": true,
+              "description": "Inclusive timestamp end."
+            },
+            {
+              "key": "zone_id",
+              "value": "",
+              "disabled": true,
+              "description": "Filter by zone ID."
+            },
+            {
+              "key": "event_type",
+              "value": "",
+              "disabled": true,
+              "description": "Filter by event type."
+            },
+            {
+              "key": "limit",
+              "value": "100",
+              "disabled": true,
+              "description": ""
+            },
+            {
+              "key": "offset",
+              "value": "0",
+              "disabled": true,
+              "description": ""
+            }
+          ]
+        },
+        "description": "Return behavioral events with date range, zone, and event_type filters. Results are always paginated with limit and offset.",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{access_token}}",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "List visits",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/analytics/visits",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "analytics",
+            "visits"
+          ],
+          "query": [
+            {
+              "key": "start_at",
+              "value": "",
+              "disabled": true,
+              "description": "Inclusive entered_at start."
+            },
+            {
+              "key": "end_at",
+              "value": "",
+              "disabled": true,
+              "description": "Inclusive entered_at end."
+            },
+            {
+              "key": "zone_id",
+              "value": "",
+              "disabled": true,
+              "description": "Filter by zone ID."
+            },
+            {
+              "key": "limit",
+              "value": "100",
+              "disabled": true,
+              "description": ""
+            },
+            {
+              "key": "offset",
+              "value": "0",
+              "disabled": true,
+              "description": ""
+            }
+          ]
+        },
+        "description": "Return analytics visits with date range and zone filters. Results are always paginated with limit and offset.",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{access_token}}",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Issue an access token",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/auth/token",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "auth",
+            "token"
+          ],
+          "query": []
+        },
+        "description": "Authenticate the configured API admin account and return an HS256 JWT. Submit credentials as OAuth2 password form fields.",
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            {
+              "key": "username",
+              "value": "admin",
+              "type": "text"
+            },
+            {
+              "key": "password",
+              "value": "{{admin_password}}",
+              "type": "text"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "List cameras",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/cameras",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "cameras"
+          ],
+          "query": [
+            {
+              "key": "limit",
+              "value": "100",
+              "disabled": true,
+              "description": ""
+            },
+            {
+              "key": "offset",
+              "value": "0",
+              "disabled": true,
+              "description": ""
+            }
+          ]
+        },
+        "description": "Return configured camera streams ordered by creation time.",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{access_token}}",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Create a camera",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/cameras",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "cameras"
+          ],
+          "query": []
+        },
+        "description": "Create a camera stream configuration. The RTSP URL is validated and a Redis config:reload message is published after the database write.",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Dining Room Camera\",\n  \"rtsp_url\": \"rtsp://mediamtx:8554/dining-room\",\n  \"status\": \"active\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{access_token}}",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Delete a camera",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/cameras/{{camera_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "cameras",
+            "{{camera_id}}"
+          ],
+          "query": []
+        },
+        "description": "Delete a camera configuration and publish Redis config:reload so ingestion stops or restarts affected streams.",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{access_token}}",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Update a camera",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/cameras/{{camera_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "cameras",
+            "{{camera_id}}"
+          ],
+          "query": []
+        },
+        "description": "Update a camera stream configuration and publish Redis config:reload so ingestion restarts affected streams.",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Dining Room Camera A\",\n  \"rtsp_url\": \"rtsp://mediamtx:8554/dining-room-a\",\n  \"status\": \"active\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{access_token}}",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "List webhooks",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/webhooks",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "webhooks"
+          ],
+          "query": [
+            {
+              "key": "limit",
+              "value": "100",
+              "disabled": true,
+              "description": ""
+            },
+            {
+              "key": "offset",
+              "value": "0",
+              "disabled": true,
+              "description": ""
+            }
+          ]
+        },
+        "description": "Return configured webhook destinations without exposing stored secrets.",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{access_token}}",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Create a webhook",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/webhooks",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "webhooks"
+          ],
+          "query": []
+        },
+        "description": "Create a webhook destination. When test_on_create is true, the URL is pinged with a 3-second timeout before saving.",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"url\": \"https://restaurant.example.com/webhooks/resync\",\n  \"secret\": \"replace-with-restaurant-webhook-secret\",\n  \"active\": true,\n  \"test_on_create\": false\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{access_token}}",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Delete a webhook",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/webhooks/{{webhook_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "webhooks",
+            "{{webhook_id}}"
+          ],
+          "query": []
+        },
+        "description": "Delete a webhook destination.",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{access_token}}",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Update a webhook",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/webhooks/{{webhook_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "webhooks",
+            "{{webhook_id}}"
+          ],
+          "query": []
+        },
+        "description": "Update a webhook destination URL, secret, or active state.",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"url\": \"https://restaurant.example.com/webhooks/resync-v2\",\n  \"active\": true\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{access_token}}",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "List zones",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/zones",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "zones"
+          ],
+          "query": [
+            {
+              "key": "camera_id",
+              "value": "",
+              "disabled": true,
+              "description": "Filter zones by camera."
+            },
+            {
+              "key": "active",
+              "value": "",
+              "disabled": true,
+              "description": "Filter zones by active flag."
+            },
+            {
+              "key": "limit",
+              "value": "100",
+              "disabled": true,
+              "description": ""
+            },
+            {
+              "key": "offset",
+              "value": "0",
+              "disabled": true,
+              "description": ""
+            }
+          ]
+        },
+        "description": "Return zone polygons, optionally filtered by camera or active state.",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{access_token}}",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Create a zone",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/zones",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "zones"
+          ],
+          "query": []
+        },
+        "description": "Create a closed normalized polygon for a camera and publish zone:config:updated after saving.",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"camera_id\": \"00000000-0000-0000-0000-000000000101\",\n  \"name\": \"Table 4\",\n  \"polygon\": [\n    [\n      0.1,\n      0.2\n    ],\n    [\n      0.4,\n      0.2\n    ],\n    [\n      0.4,\n      0.55\n    ],\n    [\n      0.1,\n      0.2\n    ]\n  ],\n  \"active\": true\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{access_token}}",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Update a zone",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/zones/{{zone_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "zones",
+            "{{zone_id}}"
+          ],
+          "query": []
+        },
+        "description": "Update a zone polygon or metadata and invalidate zone:config:cache through Redis Pub/Sub so analytics reloads the map.",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Table 4 Expanded\",\n  \"polygon\": [\n    [\n      0.1,\n      0.18\n    ],\n    [\n      0.43,\n      0.18\n    ],\n    [\n      0.43,\n      0.57\n    ],\n    [\n      0.1,\n      0.18\n    ]\n  ],\n  \"active\": true\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{access_token}}",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

@@ -13,6 +13,7 @@ from urllib.parse import quote_plus
 from dotenv import load_dotenv
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
+PLACEHOLDER_PREFIXES = ("CHANGE_ME", "GENERATE_WITH")
 
 
 def load_environment() -> None:
@@ -25,6 +26,13 @@ def require_env(name: str) -> str:
     value = os.getenv(name)
     if value is None or value == "":
         raise RuntimeError(f"Missing required environment variable: {name}")
+    return value
+
+
+def require_real_env(name: str) -> str:
+    value = require_env(name)
+    if value == "password" or value.startswith(PLACEHOLDER_PREFIXES):
+        raise RuntimeError(f"Environment variable {name} must be set to a real value")
     return value
 
 
@@ -54,3 +62,38 @@ def get_rabbitmq_url() -> str:
     host = require_env("RABBITMQ_HOST")
     port = require_env("RABBITMQ_PORT")
     return f"amqp://{user}:{password}@{host}:{port}/%2F"
+
+
+def get_jwt_secret() -> str:
+    load_environment()
+    secret = require_real_env("JWT_SECRET")
+    if len(secret) < 32:
+        raise RuntimeError("JWT_SECRET must be at least 32 characters")
+    return secret
+
+
+def get_jwt_algorithm() -> str:
+    load_environment()
+    algorithm = os.getenv("JWT_ALGORITHM", "HS256")
+    if algorithm != "HS256":
+        raise RuntimeError("JWT_ALGORITHM must be HS256")
+    return algorithm
+
+
+def get_jwt_expire_minutes() -> int:
+    load_environment()
+    raw_value = os.getenv("JWT_EXPIRE_MINUTES", "1440")
+    expire_minutes = int(raw_value)
+    if expire_minutes <= 0:
+        raise RuntimeError("JWT_EXPIRE_MINUTES must be greater than zero")
+    return expire_minutes
+
+
+def get_api_admin_username() -> str:
+    load_environment()
+    return os.getenv("API_ADMIN_USERNAME", "admin")
+
+
+def get_api_admin_password_hash() -> str:
+    load_environment()
+    return require_real_env("API_ADMIN_PASSWORD_HASH").replace("$$", "$")

@@ -11,6 +11,7 @@ from logging.config import fileConfig
 from alembic import context
 from sqlalchemy import engine_from_config, pool
 
+from api import models  # noqa: F401
 from api.core.config import get_postgres_url
 from api.db.base import Base
 
