@@ -1,7 +1,26 @@
 {
+  "users": [
+    {
+      "name": "admin",
+      "password_hash": "polhBR5fma33sKAPURsHBHyivLT0B8FIP7j+s2CMNAz2BSf5",
+      "hashing_algorithm": "rabbit_password_hashing_sha256",
+      "tags": [
+        "administrator"
+      ]
+    }
+  ],
   "vhosts": [
     {
       "name": "/"
+    }
+  ],
+  "permissions": [
+    {
+      "user": "admin",
+      "vhost": "/",
+      "configure": ".*",
+      "write": ".*",
+      "read": ".*"
     }
   ],
   "exchanges": [
@@ -26,24 +45,37 @@
   ],
   "queues": [
     {
-      "name": "webhook_dispatch",
+      "name": "hand_raise",
       "vhost": "/",
       "durable": true,
       "auto_delete": false,
       "arguments": {
         "x-dead-letter-exchange": "events.dlx",
-        "x-dead-letter-routing-key": "dlq.webhook"
+        "x-dead-letter-routing-key": "dlq"
       }
     },
     {
-      "name": "event_log",
+      "name": "customer_seated",
       "vhost": "/",
       "durable": true,
       "auto_delete": false,
-      "arguments": {}
+      "arguments": {
+        "x-dead-letter-exchange": "events.dlx",
+        "x-dead-letter-routing-key": "dlq"
+      }
     },
     {
-      "name": "dlq.webhook",
+      "name": "webhook_retry",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "events.dlx",
+        "x-dead-letter-routing-key": "dlq"
+      }
+    },
+    {
+      "name": "dlq",
       "vhost": "/",
       "durable": true,
       "auto_delete": false,
@@ -54,15 +86,23 @@
     {
       "source": "events",
       "vhost": "/",
-      "destination": "webhook_dispatch",
+      "destination": "hand_raise",
       "destination_type": "queue",
-      "routing_key": "events.#",
+      "routing_key": "events.hand_raise",
       "arguments": {}
     },
     {
       "source": "events",
       "vhost": "/",
-      "destination": "event_log",
+      "destination": "customer_seated",
+      "destination_type": "queue",
+      "routing_key": "events.customer_seated",
+      "arguments": {}
+    },
+    {
+      "source": "events",
+      "vhost": "/",
+      "destination": "webhook_retry",
       "destination_type": "queue",
       "routing_key": "events.#",
       "arguments": {}
@@ -70,9 +110,9 @@
     {
       "source": "events.dlx",
       "vhost": "/",
-      "destination": "dlq.webhook",
+      "destination": "dlq",
       "destination_type": "queue",
-      "routing_key": "dlq.webhook",
+      "routing_key": "dlq",
       "arguments": {}
     }
   ],

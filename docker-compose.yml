@@ -118,6 +118,38 @@ services:
     networks:
       - resync_backend
 
+  storage_tools:
+    image: python:3.11-slim
+    profiles:
+      - tools
+    working_dir: /app
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: ${POSTGRES_DB:-vision_system}
+      POSTGRES_USER: ${POSTGRES_USER:-vision_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-CHANGE_ME_DO_NOT_USE_THIS_IN_PROD}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: ${RABBITMQ_USER:-admin}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-CHANGE_ME}
+      PYTHONPATH: /app
+    volumes:
+      - ./:/app
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    command: sh -lc "python -m pip install -r api/requirements.txt && python scripts/health_check.py"
+    networks:
+      - resync_backend
+
 networks:
   resync_backend:
     driver: bridge

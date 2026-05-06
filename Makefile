@@ -1,7 +1,7 @@
 COMPOSE ?= docker compose
 SERVICE ?= postgres
 
-.PHONY: up down logs shell migrate
+.PHONY: up down logs shell migrate seed-dev health-check
 
 up:
 	$(COMPOSE) up -d --build
@@ -16,4 +16,10 @@ shell:
 	$(COMPOSE) exec $(SERVICE) sh
 
 migrate:
-	$(COMPOSE) exec postgres sh -c 'psql -v ON_ERROR_STOP=1 -U "$$POSTGRES_USER" -d "$$POSTGRES_DB" -f /docker-entrypoint-initdb.d/001-init.sql'
+	$(COMPOSE) run --rm storage_tools sh -lc "python -m pip install -r api/requirements.txt && python -m alembic upgrade head"
+
+seed-dev:
+	$(COMPOSE) run --rm storage_tools sh -lc "python -m pip install -r api/requirements.txt && python scripts/seed_dev.py"
+
+health-check:
+	$(COMPOSE) run --rm storage_tools sh -lc "python -m pip install -r api/requirements.txt && python scripts/health_check.py"
