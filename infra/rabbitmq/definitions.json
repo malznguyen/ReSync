@@ -1,0 +1,82 @@
+{
+  "vhosts": [
+    {
+      "name": "/"
+    }
+  ],
+  "exchanges": [
+    {
+      "name": "events",
+      "vhost": "/",
+      "type": "topic",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    },
+    {
+      "name": "events.dlx",
+      "vhost": "/",
+      "type": "direct",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    }
+  ],
+  "queues": [
+    {
+      "name": "webhook_dispatch",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "events.dlx",
+        "x-dead-letter-routing-key": "dlq.webhook"
+      }
+    },
+    {
+      "name": "event_log",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+    {
+      "name": "dlq.webhook",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    }
+  ],
+  "bindings": [
+    {
+      "source": "events",
+      "vhost": "/",
+      "destination": "webhook_dispatch",
+      "destination_type": "queue",
+      "routing_key": "events.#",
+      "arguments": {}
+    },
+    {
+      "source": "events",
+      "vhost": "/",
+      "destination": "event_log",
+      "destination_type": "queue",
+      "routing_key": "events.#",
+      "arguments": {}
+    },
+    {
+      "source": "events.dlx",
+      "vhost": "/",
+      "destination": "dlq.webhook",
+      "destination_type": "queue",
+      "routing_key": "dlq.webhook",
+      "arguments": {}
+    }
+  ],
+  "parameters": [],
+  "policies": [],
+  "global_parameters": []
+}
