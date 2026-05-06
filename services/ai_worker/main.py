@@ -1,7 +1,7 @@
 """
 Module: main
 Service: ai_worker
-Purpose: Start the Phase 3 AI detect-and-track worker.
+Purpose: Start the AI detect, track, and body ReID worker.
 """
 
 from __future__ import annotations

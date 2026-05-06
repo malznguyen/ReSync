@@ -1,7 +1,7 @@
 """
 Module: worker
 Service: ai_worker
-Purpose: Coordinate Redis frame reads, YOLO tracking, validation, and Redis writes.
+Purpose: Coordinate Redis frame reads, YOLO tracking, ReID, and Redis writes.
 """
 
 from __future__ import annotations
@@ -10,6 +10,7 @@ import logging
 import threading
 import time
 
+import reid
 from config import AiWorkerSettings
 from detector import PoseTracker
 from metrics import ProcessingMetrics
@@ -24,6 +25,11 @@ def run_worker(settings: AiWorkerSettings, shutdown_event: threading.Event) -> N
         settings.redis_url,
         settings.redis_socket_timeout_seconds,
     )
+    postgres_connection = (
+        reid.create_postgres_connection(settings.postgres_dsn)
+        if settings.reid_enabled and settings.postgres_dsn is not None
+        else None
+    )
     reader = RedisFrameReader(redis_client)
     writer = RedisTrackWriter(redis_client)
     tracker = PoseTracker(
@@ -34,10 +40,28 @@ def run_worker(settings: AiWorkerSettings, shutdown_event: threading.Event) -> N
         image_size=settings.yolo_image_size,
         device=settings.yolo_device,
     )
+    reid_pipeline = (
+        reid.ReIDPipeline(
+            extractor=reid.OSNetFeatureExtractor(
+                model_path=settings.osnet_model_path,
+                device_name=settings.yolo_device,
+            ),
+            repository=reid.CustomerRepository(postgres_connection),
+            store=reid.RedisTrackCustomerStore(redis_client),
+        )
+        if postgres_connection is not None
+        else None
+    )
     metrics = ProcessingMetrics(settings.fps_log_interval_seconds, logger)
     last_observed_frame_id: str | None = None
 
-    logger.info("Started AI worker", extra={"camera_id": settings.camera_id})
+    logger.info(
+        "Started AI worker",
+        extra={
+            "camera_id": settings.camera_id,
+            "reid_enabled": reid_pipeline is not None,
+        },
+    )
     try:
         while not shutdown_event.is_set():
             read_started_at = time.monotonic()
@@ -71,6 +95,9 @@ def run_worker(settings: AiWorkerSettings, shutdown_event: threading.Event) -> N
                 continue
 
             tracks = tracker.track(frame.frame_bytes)
+            if reid_pipeline is not None:
+                tracks = reid_pipeline.identify_tracks(frame.frame_bytes, tracks)
+
             output = TrackOutput(
                 frame_id=metadata.frame_id,
                 timestamp=metadata.timestamp,
@@ -89,6 +116,8 @@ def run_worker(settings: AiWorkerSettings, shutdown_event: threading.Event) -> N
                 timestamp=processed_at,
             )
     finally:
+        if postgres_connection is not None:
+            postgres_connection.close()
         redis_client.close()
         logger.info("Stopped AI worker", extra={"camera_id": settings.camera_id})
 

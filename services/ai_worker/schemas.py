@@ -39,6 +39,7 @@ class Track(BaseModel):
     bbox: BoundingBox
     keypoints: list[KeypointTriplet] = Field(..., min_length=17, max_length=17)
     confidence: Confidence
+    customer_id: str | None = None
 
     @field_validator("bbox")
     @classmethod

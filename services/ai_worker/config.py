@@ -21,7 +21,9 @@ DEFAULT_TRACKER_CONFIG = Path(__file__).resolve().with_name("bytetrack.yaml")
 class AiWorkerSettings:
     camera_id: str
     redis_url: str
+    postgres_dsn: str | None
     yolo_model_path: str
+    osnet_model_path: str
     tracker_config_path: str
     stale_frame_seconds: float
     poll_interval_seconds: float
@@ -31,6 +33,7 @@ class AiWorkerSettings:
     yolo_iou_threshold: float
     yolo_image_size: int
     yolo_device: str | None
+    reid_enabled: bool
     log_level: str
 
     @classmethod
@@ -40,10 +43,17 @@ class AiWorkerSettings:
         if camera_id is None or camera_id == "":
             raise RuntimeError("Missing required environment variable: CAMERA_ID")
 
+        reid_enabled = _env_bool("REID_ENABLED", True)
+
         return cls(
             camera_id=camera_id,
             redis_url=get_redis_url(),
+            postgres_dsn=get_postgres_dsn() if reid_enabled else None,
             yolo_model_path=os.getenv("YOLO_MODEL_PATH", "yolov8n-pose.pt"),
+            osnet_model_path=os.getenv(
+                "OSNET_MODEL_PATH",
+                "/models/osnet_x0_25_msmt17.pth",
+            ),
             tracker_config_path=os.getenv(
                 "AI_WORKER_TRACKER_CONFIG_PATH",
                 str(DEFAULT_TRACKER_CONFIG),
@@ -62,6 +72,7 @@ class AiWorkerSettings:
             yolo_iou_threshold=_env_float("AI_WORKER_YOLO_IOU", 0.7),
             yolo_image_size=_env_int("AI_WORKER_YOLO_IMGSZ", 640),
             yolo_device=_optional_env("AI_WORKER_DEVICE"),
+            reid_enabled=reid_enabled,
             log_level=os.getenv("LOG_LEVEL", "INFO"),
         )
 
@@ -86,6 +97,19 @@ def get_redis_url() -> str:
     port = require_env("REDIS_PORT")
     auth = f":{quote_plus(password)}@" if password else ""
     return f"redis://{auth}{host}:{port}/0"
+
+
+def get_postgres_dsn() -> str:
+    user = require_env("POSTGRES_USER")
+    password = os.getenv("POSTGRES_PASSWORD", "")
+    host = require_env("POSTGRES_HOST")
+    port = require_env("POSTGRES_PORT")
+    database = require_env("POSTGRES_DB")
+
+    auth = quote_plus(user)
+    if password:
+        auth = f"{auth}:{quote_plus(password)}"
+    return f"postgresql://{auth}@{host}:{port}/{database}"
 
 
 def _optional_env(name: str) -> str | None:
@@ -113,3 +137,10 @@ def _env_int(name: str, default: int) -> int:
     if value <= 0:
         raise RuntimeError(f"{name} must be greater than 0")
     return value
+
+
+def _env_bool(name: str, default: bool) -> bool:
+    raw_value = os.getenv(name)
+    if raw_value is None or raw_value == "":
+        return default
+    return raw_value.strip().lower() in {"1", "true", "yes", "on"}

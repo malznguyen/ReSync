@@ -41,6 +41,7 @@ def test_track_output_serializes_exact_payload_shape() -> None:
                 "bbox": [0.25, 0.2, 0.3, 0.4],
                 "keypoints": [[0.1, 0.2, 0.9]] * 17,
                 "confidence": 0.88,
+                "customer_id": None,
             }
         ],
     }
