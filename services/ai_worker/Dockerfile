@@ -5,21 +5,15 @@ ENV PYTHONUNBUFFERED=1
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
-        gstreamer1.0-libav \
-        gstreamer1.0-plugins-bad \
-        gstreamer1.0-plugins-base \
-        gstreamer1.0-plugins-good \
-        gstreamer1.0-plugins-ugly \
-        gstreamer1.0-tools \
-        libglib2.0-0 \
         libgl1 \
+        libglib2.0-0 \
     && rm -rf /var/lib/apt/lists/*
 
-WORKDIR /app/services/ingestion
+WORKDIR /app/services/ai_worker
 
 COPY requirements.txt /app/requirements.txt
 RUN python -m pip install --no-cache-dir -r /app/requirements.txt
 
-COPY services/ingestion/ .
+COPY services/ai_worker/ .
 
 CMD ["python", "main.py"]
