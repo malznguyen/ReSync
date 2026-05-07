@@ -286,6 +286,25 @@ services:
     networks:
       - resync_backend
 
+  dashboard:
+    build:
+      context: ./dashboard
+    container_name: resync-dashboard
+    restart: unless-stopped
+    environment:
+      API_BASE_URL: http://api:8000
+      NEXT_PUBLIC_HLS_BASE_URL: ${NEXT_PUBLIC_HLS_BASE_URL:-http://localhost:8888}
+      DASHBOARD_DEV_LOGIN_ENABLED: ${DASHBOARD_DEV_LOGIN_ENABLED:-true}
+      DASHBOARD_DEV_USERNAME: ${API_ADMIN_USERNAME:-admin}
+      DASHBOARD_DEV_PASSWORD: ${API_ADMIN_PASSWORD:-}
+    depends_on:
+      api:
+        condition: service_started
+    ports:
+      - "${DASHBOARD_PORT:-3000}:3000"
+    networks:
+      - resync_backend
+
   adminer:
     image: adminer:4
     container_name: resync-adminer
