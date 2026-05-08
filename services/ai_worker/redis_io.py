@@ -10,6 +10,9 @@ from redis import Redis
 from redis.exceptions import RedisError
 from schemas import FrameEnvelope, FrameMetadata, TrackOutput
 
+SYSTEM_INFERENCE_ENABLED_KEY = "system:inference:enabled"
+SYSTEM_REID_ENABLED_KEY = "system:reid:enabled"
+
 
 class RedisFrameReader:
     """Read the latest frame bytes and metadata for one camera."""
@@ -88,6 +91,26 @@ class RedisOverlayWriter:
             ) from exc
 
 
+class RedisSystemControls:
+    """Read runtime control flags shared with the Control API."""
+
+    def __init__(self, redis_client: Redis) -> None:
+        self._redis = redis_client
+
+    def is_inference_enabled(self) -> bool:
+        return self._get_bool(SYSTEM_INFERENCE_ENABLED_KEY, default=True)
+
+    def is_reid_enabled(self, default: bool) -> bool:
+        return self._get_bool(SYSTEM_REID_ENABLED_KEY, default=default)
+
+    def _get_bool(self, key: str, default: bool) -> bool:
+        try:
+            value = self._redis.get(key)
+        except RedisError as exc:
+            raise RuntimeError(f"Failed to read system control flag {key}") from exc
+        return _decode_bool(value, default)
+
+
 def create_redis_client(redis_url: str, socket_timeout_seconds: float) -> Redis:
     return Redis.from_url(
         redis_url,
@@ -102,3 +125,16 @@ def _decode_hash(raw_metadata: dict[bytes, bytes]) -> dict[str, str]:
         key.decode("utf-8"): value.decode("utf-8")
         for key, value in raw_metadata.items()
     }
+
+
+def _decode_bool(value: bytes | str | None, default: bool) -> bool:
+    if value is None:
+        return default
+    if isinstance(value, bytes):
+        value = value.decode("utf-8")
+    normalized = value.strip().lower()
+    if normalized in {"1", "true", "yes", "on"}:
+        return True
+    if normalized in {"0", "false", "no", "off"}:
+        return False
+    return default

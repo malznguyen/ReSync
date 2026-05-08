@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from fastapi import FastAPI
 
-from api.routers import analytics, auth, cameras, webhooks, zones
+from api.routers import analytics, auth, cameras, system, webhooks, zones
 
 app = FastAPI(
     title="AI Restaurant Vision Control API",
@@ -24,6 +24,7 @@ app.include_router(cameras.router)
 app.include_router(zones.router)
 app.include_router(webhooks.router)
 app.include_router(analytics.router)
+app.include_router(system.router)
 
 
 @app.get("/health", include_in_schema=False)

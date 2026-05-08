@@ -7,7 +7,8 @@ import {
   LogOut,
   Map,
   MonitorPlay,
-  RadioTower
+  RadioTower,
+  Settings
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -47,6 +48,11 @@ const NAV_ITEMS = [
     href: "/analytics",
     label: "Analytics",
     icon: BarChart3
+  },
+  {
+    href: "/settings",
+    label: "Settings",
+    icon: Settings
   }
 ] as const;
 

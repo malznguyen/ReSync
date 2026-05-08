@@ -280,7 +280,13 @@ services:
       JWT_EXPIRE_MINUTES: ${JWT_EXPIRE_MINUTES:-1440}
       API_ADMIN_USERNAME: ${API_ADMIN_USERNAME:-admin}
       API_ADMIN_PASSWORD_HASH: ${API_ADMIN_PASSWORD_HASH:?API_ADMIN_PASSWORD_HASH must be set}
+      REID_ENABLED: ${REID_ENABLED:-true}
+      SYSTEM_MOCK_CAMERA_SOURCE: ${SYSTEM_MOCK_CAMERA_SOURCE:-/app/demo.mp4}
+      SYSTEM_MOCK_CAMERA_RTSP_URL: ${SYSTEM_MOCK_CAMERA_RTSP_URL:-rtsp://mediamtx:8554/test}
+      SYSTEM_MOCK_CAMERA_FFMPEG: ${SYSTEM_MOCK_CAMERA_FFMPEG:-ffmpeg}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    volumes:
+      - ./demo.mp4:/app/demo.mp4:ro
     depends_on:
       postgres:
         condition: service_healthy

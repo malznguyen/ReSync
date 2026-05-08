@@ -87,3 +87,18 @@ export interface LoginCredentials {
   username: string;
   password: string;
 }
+
+export interface MockCameraStatus {
+  enabled: boolean;
+  running: boolean;
+  available: boolean;
+  source_path: string;
+  rtsp_url: string;
+  detail: string | null;
+}
+
+export interface SystemStatus {
+  inference_enabled: boolean;
+  reid_enabled: boolean;
+  mock_camera: MockCameraStatus;
+}

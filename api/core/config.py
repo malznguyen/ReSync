@@ -97,3 +97,31 @@ def get_api_admin_username() -> str:
 def get_api_admin_password_hash() -> str:
     load_environment()
     return require_real_env("API_ADMIN_PASSWORD_HASH").replace("$$", "$")
+
+
+def get_reid_enabled_default() -> bool:
+    load_environment()
+    return _env_bool("REID_ENABLED", True)
+
+
+def get_mock_camera_source_path() -> Path:
+    load_environment()
+    raw_path = os.getenv("SYSTEM_MOCK_CAMERA_SOURCE", str(REPO_ROOT / "demo.mp4"))
+    return Path(raw_path)
+
+
+def get_mock_camera_rtsp_url() -> str:
+    load_environment()
+    return os.getenv("SYSTEM_MOCK_CAMERA_RTSP_URL", "rtsp://mediamtx:8554/test")
+
+
+def get_mock_camera_ffmpeg_binary() -> str:
+    load_environment()
+    return os.getenv("SYSTEM_MOCK_CAMERA_FFMPEG", "ffmpeg")
+
+
+def _env_bool(name: str, default: bool) -> bool:
+    raw_value = os.getenv(name)
+    if raw_value is None or raw_value == "":
+        return default
+    return raw_value.strip().lower() in {"1", "true", "yes", "on"}

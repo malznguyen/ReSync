@@ -18,6 +18,7 @@ from metrics import ProcessingMetrics
 from redis_io import (
     RedisFrameReader,
     RedisOverlayWriter,
+    RedisSystemControls,
     RedisTrackWriter,
     create_redis_client,
 )
@@ -39,6 +40,7 @@ def run_worker(settings: AiWorkerSettings, shutdown_event: threading.Event) -> N
     reader = RedisFrameReader(redis_client)
     writer = RedisTrackWriter(redis_client)
     overlay_writer = RedisOverlayWriter(redis_client)
+    system_controls = RedisSystemControls(redis_client)
     tracker = PoseTracker(
         model_path=settings.yolo_model_path,
         tracker_config_path=settings.tracker_config_path,
@@ -61,17 +63,36 @@ def run_worker(settings: AiWorkerSettings, shutdown_event: threading.Event) -> N
     )
     metrics = ProcessingMetrics(settings.fps_log_interval_seconds, logger)
     last_observed_frame_id: str | None = None
+    last_inference_enabled: bool | None = None
+    last_reid_enabled: bool | None = None
 
     logger.info(
         "Started AI worker",
         extra={
             "camera_id": settings.camera_id,
-            "reid_enabled": reid_pipeline is not None,
+            "reid_available": reid_pipeline is not None,
             "inference_device": settings.yolo_device,
         },
     )
     try:
         while not shutdown_event.is_set():
+            inference_enabled = system_controls.is_inference_enabled()
+            if not inference_enabled:
+                if last_inference_enabled is not False:
+                    logger.info(
+                        "Paused AI inference by system control",
+                        extra={"camera_id": settings.camera_id},
+                    )
+                last_inference_enabled = False
+                shutdown_event.wait(1.0)
+                continue
+            if last_inference_enabled is False:
+                logger.info(
+                    "Resumed AI inference by system control",
+                    extra={"camera_id": settings.camera_id},
+                )
+            last_inference_enabled = True
+
             read_started_at = time.monotonic()
             frame = reader.read_latest(settings.camera_id)
             if frame is None:
@@ -103,7 +124,23 @@ def run_worker(settings: AiWorkerSettings, shutdown_event: threading.Event) -> N
                 continue
 
             tracks = tracker.track(frame.frame_bytes)
-            if reid_pipeline is not None:
+            reid_enabled = (
+                reid_pipeline is not None
+                and system_controls.is_reid_enabled(
+                    settings.reid_enabled,
+                )
+            )
+            if reid_enabled != last_reid_enabled:
+                logger.info(
+                    "Updated ReID runtime control",
+                    extra={
+                        "camera_id": settings.camera_id,
+                        "reid_enabled": reid_enabled,
+                        "reid_available": reid_pipeline is not None,
+                    },
+                )
+                last_reid_enabled = reid_enabled
+            if reid_enabled:
                 tracks = reid_pipeline.identify_tracks(frame.frame_bytes, tracks)
 
             output = TrackOutput(

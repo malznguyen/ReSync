@@ -51,6 +51,25 @@ class Token(BaseModel):
     token_type: str = Field(default="bearer", examples=["bearer"])
 
 
+class SystemToggleRequest(BaseModel):
+    enabled: bool
+
+
+class MockCameraStatus(BaseModel):
+    enabled: bool
+    running: bool
+    available: bool
+    source_path: str
+    rtsp_url: str
+    detail: str | None = None
+
+
+class SystemStatus(BaseModel):
+    inference_enabled: bool
+    reid_enabled: bool
+    mock_camera: MockCameraStatus
+
+
 class CameraCreate(BaseModel):
     model_config = ConfigDict(
         json_schema_extra={

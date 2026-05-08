@@ -7,6 +7,7 @@ import type {
   DateRange,
   LoginCredentials,
   PaginatedResponse,
+  SystemStatus,
   TrackOutput,
   Visit,
   Zone,
@@ -186,6 +187,29 @@ export async function getVisits(
       `/api/analytics/visits?${params.toString()}`
     )
   );
+}
+
+export async function getSystemStatus(): Promise<SystemStatus> {
+  return unwrap(dashboardApi.get<SystemStatus>("/api/system/status"));
+}
+
+export async function toggleInference(enabled: boolean): Promise<SystemStatus> {
+  return toggleSystemControl("/api/system/inference/toggle", enabled);
+}
+
+export async function toggleReid(enabled: boolean): Promise<SystemStatus> {
+  return toggleSystemControl("/api/system/reid/toggle", enabled);
+}
+
+export async function toggleMockCamera(enabled: boolean): Promise<SystemStatus> {
+  return toggleSystemControl("/api/system/mock-camera/toggle", enabled);
+}
+
+function toggleSystemControl(
+  path: string,
+  enabled: boolean
+): Promise<SystemStatus> {
+  return unwrap(dashboardApi.post<SystemStatus>(path, { enabled }));
 }
 
 export function getRouteDetail(response: Response): string {
