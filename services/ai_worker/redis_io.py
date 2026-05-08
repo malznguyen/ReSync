@@ -56,6 +56,38 @@ class RedisTrackWriter:
             ) from exc
 
 
+class RedisOverlayWriter:
+    """Overwrite the latest backend-composited monitoring frame for one camera."""
+
+    def __init__(self, redis_client: Redis) -> None:
+        self._redis = redis_client
+
+    def write_overlay(
+        self,
+        camera_id: str,
+        frame_id: str,
+        timestamp: float,
+        frame_bytes: bytes,
+    ) -> None:
+        frame_key = f"cam:{camera_id}:overlay:latest"
+        meta_key = f"cam:{camera_id}:overlay:meta"
+        metadata = {
+            "frame_id": frame_id,
+            "timestamp": f"{timestamp:.6f}",
+            "camera_id": camera_id,
+        }
+
+        try:
+            with self._redis.pipeline(transaction=True) as pipe:
+                pipe.set(frame_key, frame_bytes)
+                pipe.hset(meta_key, mapping=metadata)
+                pipe.execute()
+        except RedisError as exc:
+            raise RuntimeError(
+                f"Failed to write latest overlay frame for camera {camera_id}"
+            ) from exc
+
+
 def create_redis_client(redis_url: str, socket_timeout_seconds: float) -> Redis:
     return Redis.from_url(
         redis_url,

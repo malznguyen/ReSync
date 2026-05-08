@@ -6,6 +6,7 @@ import {
   LayoutDashboard,
   LogOut,
   Map,
+  MonitorPlay,
   RadioTower
 } from "lucide-react";
 import Link from "next/link";
@@ -26,6 +27,11 @@ const NAV_ITEMS = [
     href: "/cameras",
     label: "Cameras",
     icon: Camera
+  },
+  {
+    href: "/streams",
+    label: "Live Streams",
+    icon: MonitorPlay
   },
   {
     href: "/zones",

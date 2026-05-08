@@ -7,6 +7,7 @@ import type {
   DateRange,
   LoginCredentials,
   PaginatedResponse,
+  TrackOutput,
   Visit,
   Zone,
   ZoneCreate
@@ -138,6 +139,12 @@ export async function getCameras(): Promise<Camera[]> {
 
 export async function createCamera(payload: CameraCreate): Promise<Camera> {
   return unwrap(dashboardApi.post<Camera>("/api/cameras", payload));
+}
+
+export async function getCameraTracks(cameraId: string): Promise<TrackOutput> {
+  return unwrap(
+    dashboardApi.get<TrackOutput>(`/api/cameras/${cameraId}/tracks`)
+  );
 }
 
 export async function getZones(cameraId?: string): Promise<Zone[]> {

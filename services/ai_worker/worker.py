@@ -10,11 +10,17 @@ import logging
 import threading
 import time
 
+import overlay
 import reid
 from config import AiWorkerSettings
 from detector import PoseTracker
 from metrics import ProcessingMetrics
-from redis_io import RedisFrameReader, RedisTrackWriter, create_redis_client
+from redis_io import (
+    RedisFrameReader,
+    RedisOverlayWriter,
+    RedisTrackWriter,
+    create_redis_client,
+)
 from schemas import FrameMetadata, TrackOutput
 
 logger = logging.getLogger(__name__)
@@ -32,6 +38,7 @@ def run_worker(settings: AiWorkerSettings, shutdown_event: threading.Event) -> N
     )
     reader = RedisFrameReader(redis_client)
     writer = RedisTrackWriter(redis_client)
+    overlay_writer = RedisOverlayWriter(redis_client)
     tracker = PoseTracker(
         model_path=settings.yolo_model_path,
         tracker_config_path=settings.tracker_config_path,
@@ -60,6 +67,7 @@ def run_worker(settings: AiWorkerSettings, shutdown_event: threading.Event) -> N
         extra={
             "camera_id": settings.camera_id,
             "reid_enabled": reid_pipeline is not None,
+            "inference_device": settings.yolo_device,
         },
     )
     try:
@@ -105,6 +113,22 @@ def run_worker(settings: AiWorkerSettings, shutdown_event: threading.Event) -> N
                 tracks=tracks,
             )
             writer.write_tracks(output)
+            try:
+                overlay_bytes = overlay.render_overlay_frame(frame.frame_bytes, tracks)
+                overlay_writer.write_overlay(
+                    camera_id=metadata.camera_id,
+                    frame_id=metadata.frame_id,
+                    timestamp=metadata.timestamp,
+                    frame_bytes=overlay_bytes,
+                )
+            except Exception:
+                logger.exception(
+                    "Failed to render monitoring overlay frame",
+                    extra={
+                        "camera_id": metadata.camera_id,
+                        "frame_id": metadata.frame_id,
+                    },
+                )
 
             processed_at = time.monotonic()
             latency_seconds = processed_at - read_started_at

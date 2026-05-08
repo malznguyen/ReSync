@@ -14,12 +14,18 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const username = readFormValue(formData, "username");
     const password = readFormValue(formData, "password");
     const token = await requestAuthToken(username, password);
+    const hostname = request.nextUrl.hostname.toLowerCase();
+    const isLocalhost =
+      hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1";
 
     const response = NextResponse.json({ ok: true });
     response.cookies.set(AUTH_COOKIE_NAME, token.access_token, {
       httpOnly: true,
       sameSite: "strict",
-      secure: process.env.NODE_ENV === "production",
+      secure:
+        process.env.NODE_ENV === "production" &&
+        request.nextUrl.protocol === "https:" &&
+        !isLocalhost,
       path: "/",
       maxAge: 60 * 60 * 24
     });

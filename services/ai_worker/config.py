@@ -32,7 +32,7 @@ class AiWorkerSettings:
     yolo_confidence_threshold: float
     yolo_iou_threshold: float
     yolo_image_size: int
-    yolo_device: str | None
+    yolo_device: str
     reid_enabled: bool
     log_level: str
 
@@ -71,7 +71,7 @@ class AiWorkerSettings:
             yolo_confidence_threshold=_env_float("AI_WORKER_YOLO_CONF", 0.25),
             yolo_iou_threshold=_env_float("AI_WORKER_YOLO_IOU", 0.7),
             yolo_image_size=_env_int("AI_WORKER_YOLO_IMGSZ", 640),
-            yolo_device=_optional_env("AI_WORKER_DEVICE"),
+            yolo_device=_optional_env("AI_WORKER_DEVICE") or "cuda:0",
             reid_enabled=reid_enabled,
             log_level=os.getenv("LOG_LEVEL", "INFO"),
         )

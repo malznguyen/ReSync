@@ -16,6 +16,25 @@ export interface CameraCreate {
   status: string;
 }
 
+export type Keypoint = [number, number, number];
+
+export type BoundingBox = [number, number, number, number];
+
+export interface Track {
+  track_id: string;
+  bbox: BoundingBox;
+  keypoints: Keypoint[];
+  confidence: number;
+  customer_id: string | null;
+}
+
+export interface TrackOutput {
+  frame_id: string;
+  timestamp: number | null;
+  camera_id: string;
+  tracks: Track[];
+}
+
 export interface Zone {
   id: string;
   camera_id: string;

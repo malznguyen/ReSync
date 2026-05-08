@@ -275,18 +275,26 @@ def is_matching_customer(
 
 def resolve_torch_device(device_name: str | None) -> torch.device:
     if device_name is None or device_name.strip() == "":
-        return torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        device_name = "cuda:0"
 
     normalized_name = device_name.strip().lower()
     if normalized_name.isdigit():
         normalized_name = f"cuda:{normalized_name}"
 
     device = torch.device(normalized_name)
-    if device.type == "cuda" and not torch.cuda.is_available():
-        logger.warning(
-            "CUDA requested for ReID but unavailable; falling back to CPU",
-            extra={"requested_device": device_name},
+    if device.type != "cuda":
+        raise RuntimeError(
+            f"ReID requires a CUDA device, received '{device_name}' instead"
         )
-        return torch.device("cpu")
+
+    if not torch.cuda.is_available():
+        raise RuntimeError(
+            "CUDA is required for ReID but is unavailable inside the ai_worker runtime"
+        )
+
+    if device.index is not None and device.index >= torch.cuda.device_count():
+        raise RuntimeError(
+            f"Requested CUDA device index {device.index} is unavailable"
+        )
 
     return device

@@ -125,6 +125,20 @@ def test_redis_store_uses_exact_track_customer_ttl() -> None:
     ]
 
 
+def test_resolve_torch_device_requires_cuda_runtime(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(torch.cuda, "is_available", lambda: False)
+
+    with pytest.raises(RuntimeError, match="CUDA is required"):
+        reid.resolve_torch_device("cuda:0")
+
+
+def test_resolve_torch_device_rejects_cpu_requests() -> None:
+    with pytest.raises(RuntimeError, match="requires a CUDA device"):
+        reid.resolve_torch_device("cpu")
+
+
 def _make_track(bbox: tuple[float, float, float, float]) -> Track:
     return Track(
         track_id="track-1",

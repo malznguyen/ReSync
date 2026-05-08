@@ -146,6 +146,9 @@ services:
       dockerfile: services/ai_worker/Dockerfile
     container_name: resync-ai-worker
     restart: unless-stopped
+    gpus: all
+    volumes:
+      - ./models:/models:ro
     profiles:
       - ai_worker
     environment:
@@ -167,7 +170,9 @@ services:
       AI_WORKER_YOLO_CONF: ${AI_WORKER_YOLO_CONF:-0.25}
       AI_WORKER_YOLO_IOU: ${AI_WORKER_YOLO_IOU:-0.7}
       AI_WORKER_YOLO_IMGSZ: ${AI_WORKER_YOLO_IMGSZ:-640}
-      AI_WORKER_DEVICE: ${AI_WORKER_DEVICE:-}
+      AI_WORKER_DEVICE: ${AI_WORKER_DEVICE:-cuda:0}
+      NVIDIA_VISIBLE_DEVICES: all
+      NVIDIA_DRIVER_CAPABILITIES: compute,utility
       REID_ENABLED: ${REID_ENABLED:-true}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
     depends_on:

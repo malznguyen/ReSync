@@ -18,8 +18,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { Input } from "@/components/ui/Input";
 import { Panel } from "@/components/ui/Panel";
 import { createZone, getCameras, getZones } from "@/lib/api";
-import { getHlsStreamUrl } from "@/lib/auth";
-import { cn } from "@/lib/utils";
+import { cn, getHlsStreamUrl } from "@/lib/utils";
 import type { Camera, Point, Zone } from "@/types/api";
 
 interface ZonePainterProps {
@@ -148,7 +147,6 @@ export function ZonePainter({ cameraId }: ZonePainterProps): JSX.Element {
   const [error, setError] = useState<string | undefined>();
   const [isSaving, setIsSaving] = useState(false);
 
-  const streamUrl = getHlsStreamUrl(cameraId);
   const camerasQuery = useSWR("cameras", getCameras, { refreshInterval: 5000 });
   const zonesQuery = useSWR(["zones", cameraId], () => getZones(cameraId), {
     refreshInterval: 10000
@@ -157,6 +155,10 @@ export function ZonePainter({ cameraId }: ZonePainterProps): JSX.Element {
   const camera = useMemo<Camera | undefined>(
     () => camerasQuery.data?.find((item) => item.id === cameraId),
     [cameraId, camerasQuery.data]
+  );
+  const streamUrl = useMemo(
+    () => (camera ? getHlsStreamUrl(camera.rtsp_url) : ""),
+    [camera]
   );
 
   const videoRect = useMemo(() => {
@@ -203,25 +205,28 @@ export function ZonePainter({ cameraId }: ZonePainterProps): JSX.Element {
 
   useEffect(() => {
     const video = videoRef.current;
-    if (!video) {
+    if (!video || !streamUrl) {
       return undefined;
     }
 
+    let hls: Hls | undefined;
+
     if (Hls.isSupported()) {
-      const hls = new Hls({
+      hls = new Hls({
         lowLatencyMode: true,
         backBufferLength: 30
       });
       hls.loadSource(streamUrl);
       hls.attachMedia(video);
-      return () => hls.destroy();
-    }
-
-    if (video.canPlayType("application/vnd.apple.mpegurl")) {
+    } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
       video.src = streamUrl;
     }
 
-    return undefined;
+    return () => {
+      hls?.destroy();
+      video.removeAttribute("src");
+      video.load();
+    };
   }, [streamUrl]);
 
   useEffect(() => {
